@@ -27,9 +27,12 @@ func (g *Ops) WorldCalc(req stubs.Request, res *stubs.Response) (err error) {
 	fmt.Println(req.Turns)
 	turn := 0
 
+	fmt.Println(req.World)
+
 	res.World = req.World
 	for turn < req.Turns {
 		res.World = worldState(res.World, req)
+		fmt.Println(res.World)
 		turn++
 	}
 	fmt.Println("return: ")
@@ -43,58 +46,18 @@ func (g *Ops) WorldCalc(req stubs.Request, res *stubs.Response) (err error) {
 }
 
 func worldState(finalWorld [][]uint8, req stubs.Request) [][]uint8 {
-	fmt.Println("hello")
 	tempWorld := world(req.ImageHeight, req.ImageWidth)
-	//tempWorld = finalWorld
-	//goes through rows
 	wrapper := wrapperCalc(req.ImageHeight, req.ImageWidth)
-	for i, r := range finalWorld {
-		//goes through each cell in row
-		for j, color := range r {
-			AliveCellsCount := aliveCount(i, j, finalWorld, wrapper)
-			var newColor uint8
-
-			if color == 255 {
-
-				if AliveCellsCount > 3 {
-					newColor = 0
-				} else if AliveCellsCount < 2 {
-					newColor = 0
-				} else if AliveCellsCount == 2 || AliveCellsCount == 3 {
-					newColor = 255
-				} else {
-					newColor = 255
-				}
-
-			}
-
-			if color == 0 {
-				if AliveCellsCount == 3 {
-					newColor = 255
-				} else {
-					newColor = 0
-				}
-			}
-
-			//if color != newColor {
-			//fmt.Println("Shit the bed")
-			//}
-
-			tempWorld[i][j] = newColor
-
-		}
-	}
-	finalWorld = tempWorld
-
+	fmt.Println(wrapper)
 	for i := 0; i < req.ImageHeight; i++ {
 		for j := 0; j < req.ImageWidth; j++ {
-			if tempWorld[i][j] != finalWorld[i][j] {
-				fmt.Println(i, j, "help")
-			}
+			AliveCellsCount := aliveCount(i, j, finalWorld, wrapper)
+			worldStateCalc(finalWorld, tempWorld, i, j, AliveCellsCount)
+
 		}
 	}
 
-	return finalWorld
+	return tempWorld
 
 }
 
@@ -105,10 +68,10 @@ func worldState(finalWorld [][]uint8, req stubs.Request) [][]uint8 {
 func aliveCount(i int, j int, tempWorld [][]uint8, wrapper int) uint8 {
 	//check live neighbors
 	var count uint8
-	for x := i - 1; x <= i+1; x++ {
-		for y := j - 1; y <= j+1; y++ {
+	for y := j - 1; y <= j+1; y++ {
+		for x := i - 1; x <= i+1; x++ {
 			if !(x == i && y == j) {
-				//if tempWorld[(x+16)%len(tempWorld)][(y+16)%len(tempWorld)] == 255 {
+				//tempWorld[(x+wrapper)%len(tempWorld)][(y+wrapper)%len(tempWorld[0])]
 				if tempWorld[x&wrapper][y&wrapper] == 255 {
 					count++
 				}
@@ -139,4 +102,29 @@ func wrapperCalc(ImageHeight int, ImageWidth int) int {
 
 	}
 	return wrapper
+}
+
+func worldStateCalc(finalWorld [][]uint8, tempWorld [][]uint8, i int, j int, AliveCellsCount uint8) {
+	if finalWorld[i][j] == 255 {
+
+		if AliveCellsCount > 3 {
+			tempWorld[i][j] = 0
+		} else if AliveCellsCount < 2 {
+			tempWorld[i][j] = 0
+		} else if AliveCellsCount == 2 || AliveCellsCount == 3 {
+			tempWorld[i][j] = 255
+		} else {
+			tempWorld[i][j] = 255
+		}
+
+	}
+
+	if finalWorld[i][j] == 0 {
+		if AliveCellsCount == 3 {
+			tempWorld[i][j] = 255
+		} else {
+			tempWorld[i][j] = 0
+		}
+	}
+
 }

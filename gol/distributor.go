@@ -31,9 +31,9 @@ func distributor(p Params, c distributorChannels) {
 	turn := 0
 
 	// Populating world with image
-	for x := 0; x < p.ImageWidth; x++ {
-		for y := 0; y < p.ImageHeight; y++ {
-			finalWorld[x][y] = <-c.ioInput
+	for y := 0; y < p.ImageHeight; y++ {
+		for x := 0; x < p.ImageWidth; x++ {
+			finalWorld[y][x] = <-c.ioInput
 		}
 	}
 
@@ -51,7 +51,7 @@ func distributor(p Params, c distributorChannels) {
 	request := stubs.Request{World: finalWorld, ImageHeight: p.ImageHeight, ImageWidth: p.ImageWidth, Turns: p.Turns}
 	response := new(stubs.Response)
 	client.Call(stubs.GolCalc, request, response)
-
+	fmt.Println(response.World)
 	// TODO: Report the final state using FinalTurnCompleteEvent.
 	aliveSlice := calcAlive(p, response.World)
 	c.events <- FinalTurnComplete{turn, aliveSlice}
@@ -80,9 +80,10 @@ func cellFlipped(c distributorChannels, x int, y int) {
 }
 
 func calcAlive(p Params, world [][]uint8) []util.Cell {
+	fmt.Println("I have entered")
 	var cells []util.Cell
-	for i := 0; i < p.ImageHeight; i++ {
-		for j := 0; j < p.ImageWidth; j++ {
+	for i := 0; i < p.ImageWidth; i++ {
+		for j := 0; j < p.ImageHeight; j++ {
 			if world[i][j] == 255 {
 				cells = append(cells, util.Cell{X: j, Y: i})
 			}
